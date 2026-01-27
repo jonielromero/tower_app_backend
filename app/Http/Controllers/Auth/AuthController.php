@@ -6,21 +6,66 @@ use App\Http\Controllers\Controller;
 use Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use App\Models\User;
+use App\Models\Usuario;
 use Illuminate\Support\Facades\Validator;
+
 
 class AuthController extends Controller
 {
     public function login(Request $request)
     {
+        
         // Lógica de inicio de sesión
-        if( !Auth::attempt($request->only('email', 'password')) ){
+        if( !Auth::attempt($request->only('cod_usuario', 'password')) ){
             return response()->json([
                 'message' => 'Unauthorized'
             ], 401);
         }
 
-        $user = User::where('email', $request->email)->firstOrFail();
+        $request->validate([
+            'cod_usuario' => 'required|string',
+            'password'    => 'required|string',
+        ]);
+
+        $usuario = Usuario::where('cod_usuario', $request->cod_usuario)
+            ->where('estado', 'A')
+            ->first();
+
+        if (! $usuario || ! Hash::check($request->password, $usuario->password)) {
+            return response()->json(['message' => 'Credenciales inválidas'], 401);
+        }
+
+        $usuario->tokens()->delete();
+
+        return response()->json([
+            'usuario' => $usuario,
+            'roles'   => $usuario->roles,
+            'token'   => $usuario->createToken('auth_token')->plainTextToken,
+        ]);
+    }
+
+    public function logout(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json([
+            'message' => 'Sesión cerrada correctamente'
+        ]);
+    }
+}
+
+/*class AuthController extends Controller
+{
+    public function login(Request $request)
+    {
+        // Lógica de inicio de sesión
+        if( !Auth::attempt($request->only('cod_usuario', 'password')) ){
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 401);
+        }
+
+        $user = Usuario::where('cod_usuario', $request->cod_usuario)->firstOrFail();
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -28,7 +73,7 @@ class AuthController extends Controller
             'message' => 'Hola '.$user->name.', bienvenido!!!',
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'user' => $user,
+            'userio' => $user,
         ]);
     }
 
@@ -73,4 +118,4 @@ class AuthController extends Controller
             'message' => 'Sesión cerrada correctamente'
         ]);
     }
-}
+}*/

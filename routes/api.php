@@ -15,7 +15,7 @@ Route::get('/datetime', function () {
 });
 
 // Registro de usuario
-Route::post('/register', [AuthController::class, 'register']);
+/*Route::post('/register', [AuthController::class, 'register']);
 
 // Login de usuario
 Route::post('/login', [AuthController::class, 'login']);
@@ -25,6 +25,20 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // API para obtener todas las personas
     Route::get('/personas', [PersonaController::class, 'index']);
+});*/
+
+
+Route::post('login', [AuthController::class, 'login']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('logout', [AuthController::class, 'logout']);
+    Route::get('perfil', fn ($request) => $request->user()->load('roles'));
+
+    Route::apiResource('usuarios', UsuarioController::class);
+    Route::apiResource('roles', RolController::class);
+
+    Route::post('usu_roles/assign', [UsuRolController::class, 'assign']);
+    Route::post('usu_roles/remove', [UsuRolController::class, 'remove']);
 });
 
 
